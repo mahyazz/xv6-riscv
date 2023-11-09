@@ -18,7 +18,7 @@ int flags2perm(int flags) {
 }
 
 int exec(char *path, char **argv) {
-    char *s, *last;
+    char *s, *last, *interp = path;
     int i, off;
     uint64 argc, sz = 0, sp, ustack[MAXARG], stackbase;
     struct elfhdr elf;
@@ -34,6 +34,34 @@ int exec(char *path, char **argv) {
         return -1;
     }
     ilock(ip);
+
+    // Check for shebang sequence
+    char shebang[2];
+    if (readi(ip, 0, (uint64)shebang, 0, sizeof(shebang)) != sizeof(shebang))
+        goto bad;
+    if (shebang[0] == '#' && shebang[1] == '!') {
+        // Parse interpreter from shebang line
+        char line[256];
+        // printf("I'm in shebang!\n");
+
+        int i = 0;
+        while (i < sizeof(line) - 1) {
+            if (readi(ip, 0, (uint64)&line[i], i + 2, 1) != 1) break;
+            if (line[i] == '\n') break;
+            i++;
+        }
+        line[i] = '\0';
+        interp = line;
+
+        // update argv
+        for (i = MAXARG - 1; i > 0; i--) {
+            argv[i] = argv[i - 1];
+        }
+        strncpy(argv[0], line, 256);
+
+        printf("Argv[0]: %s\n", argv[0]);
+        printf("Interpreter is: %s\n", interp);
+    }
 
     // Check ELF header
     if (readi(ip, 0, (uint64)&elf, 0, sizeof(elf)) != sizeof(elf)) goto bad;
@@ -99,7 +127,7 @@ int exec(char *path, char **argv) {
     p->trapframe->a1 = sp;
 
     // Save program name for debugging.
-    for (last = s = path; *s; s++)
+    for (last = s = interp; *s; s++)
         if (*s == '/') last = s + 1;
     safestrcpy(p->name, last, sizeof(p->name));
 
