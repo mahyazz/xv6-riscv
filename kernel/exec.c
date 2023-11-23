@@ -35,33 +35,6 @@ int exec(char *path, char **argv) {
     }
     ilock(ip);
 
-    // Check for shebang sequence
-    char shebang[2];
-    if (readi(ip, 0, (uint64)shebang, 0, sizeof(shebang)) != sizeof(shebang))
-        goto bad;
-    if (shebang[0] == '#' && shebang[1] == '!') {
-        // Parse interpreter from shebang line
-        char line[256];
-        // printf("I'm in shebang!\n");
-
-        int i = 0;
-        while (i < sizeof(line) - 1) {
-            if (readi(ip, 0, (uint64)&line[i], i + 2, 1) != 1) break;
-            if (line[i] == '\n') break;
-            i++;
-        }
-        line[i] = '\0';
-        path = line;
-
-        // update argv
-        for (i = MAXARG - 1; i > 0; i--) {
-            argv[i] = argv[i - 1];
-        }
-        strncpy(argv[0], line, 256);
-
-        printf("Interpreter is: %s\n", path);
-    }
-
     // Check ELF header
     if (readi(ip, 0, (uint64)&elf, 0, sizeof(elf)) != sizeof(elf)) goto bad;
 
