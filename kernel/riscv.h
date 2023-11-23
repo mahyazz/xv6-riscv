@@ -1,7 +1,5 @@
+// clang-format off
 #ifndef __ASSEMBLER__
-
-// wait for interrupt
-static inline void wfi() { asm volatile("wfi"); }
 
 // which hart (core) is this?
 static inline uint64 r_mhartid() {
@@ -239,6 +237,9 @@ static inline void sfence_vma() {
     // the zero, zero means flush all TLB entries.
     asm volatile("sfence.vma zero, zero");
 }
+
+// wait for interrupt
+static inline void wfi() { asm volatile("wfi"); }
 
 typedef uint64 pte_t;
 typedef uint64 *pagetable_t;  // 512 PTEs

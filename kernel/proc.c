@@ -1,3 +1,4 @@
+// clang-format off
 #include "types.h"
 #include "param.h"
 #include "memlayout.h"
@@ -455,6 +456,7 @@ scheduler(void)
     for(p = proc; p < &proc[NPROC]; p++) {
       acquire(&p->lock);
       if(p->state == RUNNABLE) {
+        __atomic_store_4(&(c->is_runnable), 1, __ATOMIC_RELAXED);
         // Switch to chosen process.  It is the process's job
         // to release its lock and then reacquire it
         // before jumping back to us.
@@ -468,6 +470,7 @@ scheduler(void)
       }
       release(&p->lock);
     }
+    if (!__atomic_load_4(&(c->is_runnable), __ATOMIC_RELAXED)){wfi();} 
   }
 }
 

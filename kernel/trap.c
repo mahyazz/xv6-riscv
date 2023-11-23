@@ -1,3 +1,4 @@
+// clang-format off
 #include "types.h"
 #include "param.h"
 #include "memlayout.h"
@@ -199,6 +200,10 @@ devintr()
     // now allowed to interrupt again.
     if(irq)
       plic_complete(irq);
+
+    for(struct cpu* c = cpus; c < &cpus[NCPU]; c++){
+      __atomic_store_4(&(c->is_runnable), 1, __ATOMIC_RELAXED);
+    }
 
     return 1;
   } else if(scause == 0x8000000000000001L){
