@@ -18,7 +18,7 @@ int flags2perm(int flags) {
 }
 
 int exec(char *path, char **argv) {
-    char *s, *last, *interp = path;
+    char *s, *last;
     int i, off;
     uint64 argc, sz = 0, sp, ustack[MAXARG], stackbase;
     struct elfhdr elf;
@@ -51,7 +51,7 @@ int exec(char *path, char **argv) {
             i++;
         }
         line[i] = '\0';
-        interp = line;
+        path = line;
 
         // update argv
         for (i = MAXARG - 1; i > 0; i--) {
@@ -59,8 +59,7 @@ int exec(char *path, char **argv) {
         }
         strncpy(argv[0], line, 256);
 
-        printf("Argv[0]: %s\n", argv[0]);
-        printf("Interpreter is: %s\n", interp);
+        printf("Interpreter is: %s\n", path);
     }
 
     // Check ELF header
@@ -127,7 +126,7 @@ int exec(char *path, char **argv) {
     p->trapframe->a1 = sp;
 
     // Save program name for debugging.
-    for (last = s = interp; *s; s++)
+    for (last = s = path; *s; s++)
         if (*s == '/') last = s + 1;
     safestrcpy(p->name, last, sizeof(p->name));
 
